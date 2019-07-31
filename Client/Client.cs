@@ -17,20 +17,10 @@ namespace Client
             {
                 clientSocket.Connect(remoteEndPointConnection);
                 Console.WriteLine("Connected to {0}", clientSocket.RemoteEndPoint.ToString());
-                //while(true)
-                //{
-
-
-                //    Task.Factory.StartNew(() => RecieveMessage(clientSocket));
-                //    Task.Factory.StartNew(() => SendMessage(clientSocket));
-                //}
                 var readMessage = new Thread(new ThreadStart(() => RecieveMessage(clientSocket)));
                 var sendMessage = new Thread(new ThreadStart(() => SendMessage(clientSocket))); ;
                 readMessage.Start();
                 sendMessage.Start();
-
-                //clientSocket.Shutdown(SocketShutdown.Both);
-                //clientSocket.Close();
             }
             catch (SocketException se)
             {
@@ -45,7 +35,10 @@ namespace Client
                 var message = Console.ReadLine();
                 var messageToBeSent = Encoding.ASCII.GetBytes(message);
                 clientSocket.Send(messageToBeSent);
+                if (message.Equals("bye"))
+                    break;
             }
+            clientSocket.Shutdown(SocketShutdown.Send);
 
         }
 
@@ -55,8 +48,13 @@ namespace Client
             while (true)
             {
                 var byteRecieved = clientSocket.Receive(messageRecieved);
-                Console.WriteLine(Encoding.ASCII.GetString(messageRecieved, 0, byteRecieved));
+                var message = Encoding.ASCII.GetString(messageRecieved, 0, byteRecieved);
+                if (message.Equals("bye"))
+                    break;
+                Console.WriteLine(message);
             }
+            clientSocket.Shutdown(SocketShutdown.Receive);
+            clientSocket.Close();
         }
     }
 }
